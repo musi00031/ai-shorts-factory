@@ -1,3 +1,7 @@
+import os
+os.environ.setdefault("DATABASE_PATH", "/tmp/ai-shorts-factory-test.db")
+os.environ.setdefault("OUTPUT_DIR", "/tmp/ai-shorts-factory-test-output")
+
 from fastapi.testclient import TestClient
 import app.main as main
 
