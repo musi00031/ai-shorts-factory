@@ -2,16 +2,25 @@ services:
   app:
     build: .
     env_file: .env
-    ports: ["8000:8000"]
-    volumes: ["factory_data:/data"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - factory_data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
   bot:
     build: .
     env_file: .env
-    command: ["python","-m","app.telegram_bot"]
+    command: ["python", "-m", "app.telegram_bot"]
     environment:
       FACTORY_URL: http://app:8000
-    depends_on: [app]
+    depends_on:
+      app:
+        condition: service_healthy
     profiles: ["telegram"]
     restart: unless-stopped
 volumes:
