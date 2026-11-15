@@ -1,0 +1,55 @@
+name: Deploy to VPS
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          test -n "$VPS_SSH_KEY"
+          test -n "$VPS_KNOWN_HOSTS"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Prepare application environment
+        env:
+          API_KEY: ${{ secrets.FACTORY_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          test -n "$API_KEY"
+          {
+            printf 'API_KEY=%s\n' "$API_KEY"
+            printf 'DATABASE_PATH=/data/factory.db\nOUTPUT_DIR=/data/output\n'
+            printf 'TELEGRAM_BOT_TOKEN=%s\n' "$TELEGRAM_BOT_TOKEN"
+            printf 'FACTORY_URL=http://app:8000\n'
+            printf 'LLM_BASE_URL=%s\nLLM_MODEL=%s\nLLM_API_KEY=%s\n' "$LLM_BASE_URL" "${LLM_MODEL:-qwen2.5:3b}" "$LLM_API_KEY"
+          } > .env
+          chmod 600 .env
+      - name: Copy application
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          test -n "$VPS_HOST"
+          test -n "$VPS_USER"
+          ssh "$VPS_USER@$VPS_HOST" 'mkdir -p /opt/ai-shorts-factory'
+          rsync -az --delete --exclude='.git' --exclude='data' --exclude='output' ./ "$VPS_USER@$VPS_HOST:/opt/ai-shorts-factory/"
+          scp .env "$VPS_USER@$VPS_HOST:/opt/ai-shorts-factory/.env"
+      - name: Start or update stack
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" 'cd /opt/ai-shorts-factory && docker compose up -d --build'
