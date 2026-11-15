@@ -16,6 +16,20 @@ Self-hosted starter for creating vertical 9:16 Shorts/Reels from a topic or supp
 3. Run `docker compose up --build -d`.
 4. Open `http://localhost:8000`, enter the API key and connect.
 
+## Multiple free-model providers
+
+The planner supports an ordered fallback chain of OpenAI-compatible chat-completions providers. Configure `LLM_PROVIDERS` as a JSON array in `.env`; each entry uses `name`, `base_url`, `model`, and `api_key_env`. The app tries providers in order and moves to the next on rate limits, outages, or invalid responses. API keys stay in server environment variables and are never sent to the browser.
+
+Example starter chain (check current model availability and free quotas before use):
+
+```env
+OPENROUTER_API_KEY=your_openrouter_key
+GOOGLE_AI_API_KEY=your_google_ai_studio_key
+LLM_PROVIDERS=[{"name":"OpenRouter Free Router","base_url":"https://openrouter.ai/api/v1/chat/completions","model":"openrouter/free","api_key_env":"OPENROUTER_API_KEY"},{"name":"Google AI Studio","base_url":"https://generativelanguage.googleapis.com/v1beta/openai/chat/completions","model":"gemini-2.5-flash","api_key_env":"GOOGLE_AI_API_KEY"}]
+```
+
+Other candidates with free tiers or limited free quotas include Groq, Cerebras, Hugging Face Inference Providers, NVIDIA NIM, and GitHub Models. They require separate keys and their limits/model identifiers can change. Do not treat free access as unlimited. Keep the deterministic renderer fallback enabled.
+
 ## Enable local AI (optional)
 The included Ollama profile runs a local model; it is not a paid API:
 ```bash
