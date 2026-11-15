@@ -43,7 +43,7 @@ def _call_provider(provider, prompt):
     if isinstance(raw, list):
         raw = "".join(x.get("text", "") for x in raw if isinstance(x, dict))
     raw = str(raw).strip()
-    raw = re.sub(r"^\`\`\`(?:json)?\\s*|\\s*\`\`\`$", "", raw, flags=re.I)
+    raw = re.sub(r"^\`\`\`(?:json)?\s*|\s*\`\`\`$", "", raw, flags=re.I)
     try:
         result = json.loads(raw)
     except json.JSONDecodeError:
@@ -97,7 +97,7 @@ def _llm_plan(payload):
                 if isinstance(scene, dict) and scene.get("text"):
                     clean_scenes.append({"index": i, "text": shorten(str(scene["text"]), 115, placeholder="…")})
             if not clean_scenes:
-                clean_scenes = [{"index": i, "text": shorten(x.strip(), 115, placeholder="…")} for i, x in enumerate(re.split(r"(?<=[.!?])\\s+|\\n+", script), 1) if x.strip()][:8]
+                clean_scenes = [{"index": i, "text": shorten(x.strip(), 115, placeholder="…")} for i, x in enumerate(re.split(r"(?<=[.!?])\s+|\n+", script), 1) if x.strip()][:8]
             seo = result.get("seo") if isinstance(result.get("seo"), dict) else {}
             engine = str(provider.get("name") or provider["model"])
             return {
@@ -131,12 +131,12 @@ def build_plan(payload):
     ru = payload["language"].lower().startswith("ru")
     hook = f"Ты удивишься: {topic}. Вот главное." if ru else f"You may be surprised by {topic}. Here is the key."
     default = (
-        hook + "\\n\\nРазберём тему коротко и по делу. Обрати внимание на главную деталь: именно она меняет понимание всей истории. Запомни вывод и проверь его на практике. Подпишись — впереди новые разборы."
+        hook + "\n\nРазберём тему коротко и по делу. Обрати внимание на главную деталь: именно она меняет понимание всей истории. Запомни вывод и проверь его на практике. Подпишись — впереди новые разборы."
         if ru else
-        hook + "\\n\\nLet us break it down. Focus on the key detail most people overlook. It changes how the story makes sense. Remember the takeaway and follow for more."
+        hook + "\n\nLet us break it down. Focus on the key detail most people overlook. It changes how the story makes sense. Remember the takeaway and follow for more."
     )
     script = payload.get("script", "").strip() or default
-    parts = [x.strip() for x in re.split(r"(?<=[.!?])\\s+|\\n+", script) if x.strip()]
+    parts = [x.strip() for x in re.split(r"(?<=[.!?])\s+|\n+", script) if x.strip()]
     scenes = [{"index": i + 1, "text": shorten(x, 115, placeholder="…")} for i, x in enumerate(parts[:8])]
     return {
         "director": {"format": "vertical explainer", "target_duration": payload["duration"]},
