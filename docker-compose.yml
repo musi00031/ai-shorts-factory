@@ -23,5 +23,12 @@ services:
         condition: service_healthy
     profiles: ["telegram"]
     restart: unless-stopped
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    profiles: ["llm"]
+    restart: unless-stopped
 volumes:
   factory_data:
+  ollama_data:
