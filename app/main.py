@@ -10,8 +10,10 @@ from app import db
 from app.config import API_KEY
 from app.agents import build_plan
 from app.renderer import render_video
+from app.media_api import router as media_router
 
-app = FastAPI(title="AI Shorts Factory", version="0.2.0")
+app = FastAPI(title="AI Shorts Factory + AI Media HQ", version="1.0.0")
+app.include_router(media_router)
 db.init_db()
 
 
@@ -23,7 +25,6 @@ class JobRequest(BaseModel):
 
 
 def require_auth(authorization: str | None) -> None:
-    # Fail closed: never expose job creation/history/video without a configured key.
     if not API_KEY:
         raise HTTPException(status_code=503, detail="Server is not configured: set API_KEY")
     if authorization != f"Bearer {API_KEY}":
@@ -46,7 +47,7 @@ async def process(job_id: str) -> None:
 
 @app.get("/health")
 def health():
-    return {"ok": True, "service": "ai-shorts-factory"}
+    return {"ok": True, "service": "ai-shorts-factory", "media_hq": "1.0.0"}
 
 
 @app.get("/", response_class=HTMLResponse)
