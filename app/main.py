@@ -36,7 +36,7 @@ async def process(job_id: str) -> None:
         return
     try:
         db.update_job(job_id, status="planning")
-        plan = build_plan(job["payload"])
+        plan = await asyncio.to_thread(build_plan, job["payload"])
         db.update_job(job_id, status="rendering", result={"plan": plan})
         path = await asyncio.to_thread(render_video, job_id, plan, job["duration"])
         db.update_job(job_id, status="completed", result={"plan": plan, "video_path": path})
