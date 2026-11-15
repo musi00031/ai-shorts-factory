@@ -52,4 +52,4 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh "$VPS_USER@$VPS_HOST" 'cd /opt/ai-shorts-factory && docker compose up -d --build'
+          ssh "$VPS_USER@$VPS_HOST" 'cd /opt/ai-shorts-factory && profiles="" && if grep -q "^TELEGRAM_BOT_TOKEN=." .env; then profiles="$profiles --profile telegram"; fi && if grep -q "^LLM_BASE_URL=http://ollama:" .env; then profiles="$profiles --profile llm"; fi && docker compose $profiles up -d --build'
