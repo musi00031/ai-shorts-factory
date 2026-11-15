@@ -1,4 +1,4 @@
-import subprocess,tempfile
+import subprocess,tempfile,math
 from pathlib import Path
 from PIL import Image,ImageDraw,ImageFont
 from app.config import OUTPUT_DIR
@@ -25,10 +25,10 @@ def card(text,i,total,path):
   box=d.textbbox((0,0),line,font=f); d.text(((W-(box[2]-box[0]))//2,y),line,font=f,fill=(245,247,250)); y+=90
  d.text((80,1770),f'{i:02d} / {total:02d}',font=ft(28),fill=(145,155,170)); im.save(path,quality=92)
 def render_video(job_id,plan,duration):
- scenes=plan.get('scenes') or [{'text':plan['script']}]; sec=max(3,int(duration/max(1,len(scenes))))
+ scenes=plan.get('scenes') or [{'text':plan['script']}]; sec=max(3,math.ceil(duration/max(1,len(scenes))))
  with tempfile.TemporaryDirectory() as td:
   td=Path(td); n=len(scenes)
   for i,s in enumerate(scenes,1): card(s['text'],i,n,td/f'frame{i:03d}.jpg')
   out=OUTPUT_DIR/f'{job_id}.mp4'
-  cmd=['ffmpeg','-y','-hide_banner','-loglevel','error','-framerate',f'1/{sec}','-i',str(td/'frame%03d.jpg'),'-vf',f'scale={W}:{H},fps=30,format=yuv420p','-c:v','libx264','-preset','veryfast','-crf','23','-movflags','+faststart',str(out)]
+  cmd=['ffmpeg','-y','-hide_banner','-loglevel','error','-framerate',f'1/{sec}','-i',str(td/'frame%03d.jpg'),'-t',str(duration),'-vf',f'scale={W}:{H},fps=30,format=yuv420p','-c:v','libx264','-preset','veryfast','-crf','23','-movflags','+faststart',str(out)]
   subprocess.run(cmd,check=True,capture_output=True,text=True); return str(out)
