@@ -1,1 +1,17 @@
-{"name":"AI Shorts Factory","image":"mcr.microsoft.com/devcontainers/python:1-3.11-bookworm","postCreateCommand":"pip install -r requirements.txt","forwardPorts":[8000],"portsAttributes":{"8000":{"label":"Factory API","onAutoForward":"openBrowser"}}}
+{
+  "name": "AI Shorts Factory",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "postCreateCommand": "pip install -r requirements-dev.txt",
+  "forwardPorts": [
+    8000
+  ],
+  "portsAttributes": {
+    "8000": {
+      "label": "Factory dashboard",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}
